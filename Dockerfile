@@ -40,7 +40,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=root:root . .
 # Remove secrets that must never be baked into the image
-RUN rm -f /app/.env /app/ssl/haucsia.com.key /app/ssl/haucsia.com.pem
+RUN rm -rf /app/.env /app/deploy/ssl /app/archive /app/audit-docs
 
 RUN mkdir -p /app/instance /app/instance/web_challenges /app/instance/nc_challenges /app/instance/badges /app/instance/avatars \
     && chown -R root:root /app/instance \
