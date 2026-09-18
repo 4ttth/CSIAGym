@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - CSIA GYM{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto fade-in">
+    <div class="mb-8">
+        <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Account</p>
+        <h1 class="text-4xl font-black uppercase" style="color:#fff;">■ SETTINGS</h1>
+        <p class="mt-2 text-xl font-bold uppercase" style="color:#666;">UPDATE YOUR PROFILE AND SECURITY SETTINGS</p>
+    </div>
+
+    <!-- Profile Picture -->
+    <div class="bg-black border-4 border-red-600 p-8 mb-6 shadow-lg hover-brutal">
+        <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">PROFILE PICTURE</h2>
+        <div class="flex items-center gap-8 mb-6">
+            {% if current_user.profile_picture %}
+            <img src="{{ url_for('settings.serve_avatar', username=current_user.username) }}"
+                 alt="Avatar" id="current-avatar" style="width:100px;height:100px;object-fit:cover;border:3px solid #8b0000;">
+            {% endif %}
+            <div>
+                <p class="text-sm opacity-60 uppercase font-bold mb-2">Upload a new picture (PNG, JPG, WEBP)</p>
+                <p class="text-xs opacity-40 uppercase">Crop before uploading — saved as 500×500 WebP</p>
+            </div>
+        </div>
+
+        <!-- File picker (not inside the upload form) -->
+        <label id="avatar-pick-btn" style="display:inline-flex;align-items:center;gap:0.5rem;padding:9px 20px;background:#1a1a1a;color:#e5e5e5;border:2px solid #8b0000;cursor:pointer;font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.05em;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+            Choose Image
+        </label>
+        <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
+
+        <!-- Cropper modal -->
+        <div id="cropper-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; display:none; align-items:center; justify-content:center;">
+            <div style="background:#111; border:3px solid #8b0000; padding:24px; max-width:520px; width:95%; border-radius:4px;">
+                <p class="text-sm font-black uppercase mb-3" style="color:#fff;">CROP YOUR PHOTO</p>
+                <div style="max-height:380px; overflow:hidden;">
+                    <img id="cropper-img" style="max-width:100%; display:block;">
+                </div>
+                <div class="flex gap-3 mt-4">
+                    <button id="crop-confirm" style="flex:1; padding:10px; background:#8b0000; color:#fff; font-weight:900; text-transform:uppercase; border:none; cursor:pointer;">CROP &amp; UPLOAD</button>
+                    <button id="crop-cancel" style="flex:1; padding:10px; background:#333; color:#fff; font-weight:900; text-transform:uppercase; border:none; cursor:pointer;">CANCEL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden form that submits the cropped blob -->
+        <form id="avatar-upload-form" method="POST" action="{{ url_for('settings.upload_avatar') }}" enctype="multipart/form-data" style="display:none;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="file" name="avatar" id="avatar-cropped-input">
+        </form>
+    </div>
+
+    <!-- Profile & Password -->
+    <div class="bg-black border-4 border-red-600 p-8 shadow-lg hover-brutal">
+        <form method="POST" action="{{ url_for('settings.index') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Profile Information -->
+            <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">PROFILE INFORMATION</h2>
+
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Username</label>
+                    <input type="text" name="username" value="{{ current_user.username }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Full Name</label>
+                    <input type="text" name="full_name" value="{{ current_user.full_name or '' }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm opacity-60 uppercase font-bold mb-1">Email</label>
+                <input type="email" name="email" value="{{ current_user.email }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+
+            <!-- Optional Fields -->
+            <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2 mt-8">OPTIONAL DETAILS</h2>
+
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Affiliation / School</label>
+                    <input type="text" name="affiliation" value="{{ current_user.affiliation or '' }}"
+                           placeholder="e.g. MIT, Google"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Age</label>
+                    <input type="number" name="age" value="{{ current_user.age or '' }}" min="1" max="120"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-sm opacity-60 uppercase font-bold mb-1">Gender</label>
+                <select name="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <option value="">Prefer not to answer</option>
+                    <option value="Male" {% if current_user.gender == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if current_user.gender == 'Female' %}selected{% endif %}>Female</option>
+                    <option value="Nonbinary or Genderfluid" {% if current_user.gender == 'Nonbinary or Genderfluid' %}selected{% endif %}>Nonbinary or Genderfluid</option>
+                    <option value="Not listed" {% if current_user.gender == 'Not listed' %}selected{% endif %}>Not listed</option>
+                </select>
+            </div>
+
+            <!-- Bio -->
+            <h2 class="text-2xl font-black uppercase mb-2 border-b-2 border-red-600 pb-2 mt-8">BIO</h2>
+            <div class="mb-2 p-3 border-l-4 border-yellow-400" style="background:#1a1a00;">
+                <p class="text-xs font-bold uppercase" style="color:#facc15;">⚠ PUBLIC WARNING — Everything you write in your bio will be visible to anyone who views your profile.</p>
+            </div>
+            <div class="mb-8">
+                <textarea name="bio" rows="4" maxlength="500"
+                          placeholder="Tell others about yourself... (max 500 characters)"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">{{ current_user.bio or '' }}</textarea>
+                <p class="text-xs opacity-40 uppercase mt-1">Max 500 characters</p>
+            </div>
+
+            <!-- Social Media -->
+            <h2 class="text-2xl font-black uppercase mb-2 border-b-2 border-red-600 pb-2 mt-8">SOCIAL MEDIA <span class="text-sm font-normal opacity-50">(ALL OPTIONAL — SHOWN PUBLICLY)</span></h2>
+            <div class="grid md:grid-cols-2 gap-4 mb-8">
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">GitHub URL</label>
+                    <input type="url" name="github" value="{{ current_user.github or '' }}"
+                           placeholder="https://github.com/username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">LinkedIn URL</label>
+                    <input type="url" name="linkedin" value="{{ current_user.linkedin or '' }}"
+                           placeholder="https://linkedin.com/in/username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Facebook URL</label>
+                    <input type="url" name="facebook" value="{{ current_user.facebook or '' }}"
+                           placeholder="https://facebook.com/username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Contact Number</label>
+                    <input type="tel" name="contact_number" value="{{ current_user.contact_number or '' }}"
+                           placeholder="+1 234 567 8900"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Discord Username</label>
+                    <input type="text" name="discord" value="{{ current_user.discord or '' }}"
+                           placeholder="username#0000 or username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
+            <!-- Change Password -->
+            <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">CHANGE PASSWORD</h2>
+            <p class="text-sm opacity-60 uppercase mb-4">Leave blank to keep current password</p>
+
+            <div class="grid md:grid-cols-3 gap-4 mb-8">
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Current Password</label>
+                    <input type="password" name="current_password" placeholder="Current password"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">New Password</label>
+                    <input type="password" name="new_password" placeholder="New password"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Confirm Password</label>
+                    <input type="password" name="confirm_password" placeholder="Confirm new password"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <button type="submit"
+                        style="padding: 12px 32px; background: #8b0000; color: #fff; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer;">
+                    SAVE CHANGES
+                </button>
+                <a href="{{ url_for('settings.account') }}"
+                   style="padding: 12px 32px; background: #222; color: #fff; font-weight: 900; text-transform: uppercase; text-decoration: none; border: 2px solid #8b0000;">
+                    CANCEL
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script>
+(function () {
+    const fileInput   = document.getElementById('avatar-file-input');
+    const modal       = document.getElementById('cropper-modal');
+    const cropperImg  = document.getElementById('cropper-img');
+    const confirmBtn  = document.getElementById('crop-confirm');
+    const cancelBtn   = document.getElementById('crop-cancel');
+    const uploadForm  = document.getElementById('avatar-upload-form');
+    const croppedInput = document.getElementById('avatar-cropped-input');
+    let cropper = null;
+
+    fileInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        cropperImg.src = url;
+        modal.style.display = 'flex';
+        if (cropper) { cropper.destroy(); cropper = null; }
+        cropper = new Cropper(cropperImg, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 0.9,
+        });
+    });
+
+    cancelBtn.addEventListener('click', function () {
+        modal.style.display = 'none';
+        if (cropper) { cropper.destroy(); cropper = null; }
+        fileInput.value = '';
+    });
+
+    confirmBtn.addEventListener('click', function () {
+        if (!cropper) return;
+        cropper.getCroppedCanvas({ width: 500, height: 500 }).toBlob(function (blob) {
+            const dt = new DataTransfer();
+            dt.items.add(new File([blob], 'avatar.webp', { type: 'image/webp' }));
+            croppedInput.files = dt.files;
+            modal.style.display = 'none';
+            if (cropper) { cropper.destroy(); cropper = null; }
+            uploadForm.submit();
+        }, 'image/webp', 0.85);
+    });
+})();
+</script>
+    <!-- Notification Preferences -->
+    <div class="bg-black border-4 border-red-600 p-8 mt-6 shadow-lg hover-brutal">
+        <h2 class="text-2xl font-black uppercase mb-2 border-b-2 border-red-600 pb-2">NOTIFICATION PREFERENCES</h2>
+        <p class="text-xs opacity-40 uppercase mb-6">Control which notifications you receive</p>
+        <form method="POST" action="{{ url_for('settings.save_notification_prefs') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% set prefs = [
+                ('notif_global',            'Admin Announcements',          'Global notifications sent by administrators'),
+                ('notif_changelog',         'Version Changelogs',           'Notified when the platform is updated'),
+                ('notif_new_challenge',     'New Challenges',               'Notified when a new challenge is published'),
+                ('notif_challenge_solve',   'Your Challenge Solved',        'Notified when someone solves a challenge you authored'),
+                ('notif_challenge_sub',     'Subscribed Challenge Solves',  'Notified when someone solves a challenge you subscribed to'),
+                ('notif_post_reply',        'Post Replies',                 'Notified when someone replies to your post or a post you subscribed to'),
+                ('notif_submission_result', 'Submission Results',           'Notified when your challenge submission is approved or rejected'),
+                ('notif_badge_earned',      'Badge Earned',                 'Notified when you earn a new badge'),
+                ('notif_first_blood',       'First Blood',                  'Notified when you are the first to solve a challenge'),
+            ] %}
+            <div style="display:flex;flex-direction:column;gap:12px;">
+            {% for col, label, desc in prefs %}
+            <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#111;border:1px solid #222;cursor:pointer;gap:16px;">
+                <div>
+                    <p style="font-size:0.85rem;font-weight:900;text-transform:uppercase;color:#e5e5e5;margin:0;">{{ label }}</p>
+                    <p style="font-size:0.72rem;color:#555;margin:2px 0 0;">{{ desc }}</p>
+                </div>
+                <input type="checkbox" name="{{ col }}" {% if current_user|attr(col) %}checked{% endif %}
+                       style="width:18px;height:18px;accent-color:#8b0000;flex-shrink:0;">
+            </label>
+            {% endfor %}
+            </div>
+            <button type="submit" style="margin-top:20px;padding:10px 28px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">
+                SAVE PREFERENCES
+            </button>
+        </form>
+    </div>
+
+<script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour-settings.js') }}"></script>
+
+    <!-- Passkey Management -->
+    <div class="bg-black border-4 border-red-600 p-8 mt-6 shadow-lg hover-brutal">
+        <h2 class="text-2xl font-black uppercase mb-2 border-b-2 border-red-600 pb-2">PASSKEY / BIOMETRIC LOGIN</h2>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <img src="{{ url_for('static', filename='img/DUO_LOGO.png') }}" alt="Duo" style="height:28px;object-fit:contain;opacity:0.8;">
+          <p class="text-xs opacity-40 uppercase">Passwordless login using your device's biometrics or PIN</p>
+        </div>
+        {% if current_user.passkeys %}
+        <div style="margin-bottom:16px;">
+          {% for pk in current_user.passkeys %}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#111;border:1px solid #222;margin-bottom:6px;">
+            <div>
+              <p style="font-size:0.82rem;font-weight:700;color:#e5e5e5;">🔑 {{ pk.device_name or 'Passkey Device' }}</p>
+              <p style="font-size:0.65rem;color:#555;">Registered {{ pk.created_at.strftime('%b %d, %Y') }}</p>
+            </div>
+            <button onclick="removePasskey({{ pk.id }}, this)"
+                    style="padding:6px 14px;background:transparent;color:#666;font-size:0.7rem;font-weight:700;text-transform:uppercase;border:1px solid #333;cursor:pointer;"
+                    onmouseover="this.style.color='#f87171';this.style.borderColor='#f87171'" onmouseout="this.style.color='#666';this.style.borderColor='#333'">
+              REMOVE
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p style="font-size:0.8rem;color:#555;margin-bottom:16px;">No passkeys registered yet.</p>
+        {% endif %}
+        <div id="passkey-settings-status" style="font-size:0.75rem;color:#888;margin-bottom:10px;min-height:18px;"></div>
+        <button onclick="addPasskeyFromSettings()" id="add-passkey-btn"
+                style="padding:10px 24px;background:#8b0000;color:#fff;font-weight:900;font-size:0.78rem;text-transform:uppercase;border:none;cursor:pointer;transition:background 0.15s;"
+                onmouseover="this.style.background='#cc0000'" onmouseout="this.style.background='#8b0000'">
+          + ADD PASSKEY
+        </button>
+    </div>
+
+<script>
+async function addPasskeyFromSettings() {
+  var btn = document.getElementById('add-passkey-btn');
+  var status = document.getElementById('passkey-settings-status');
+  btn.disabled = true;
+  status.style.color = '#888';
+  status.textContent = '';
+
+  function b64dec(s) {
+    s = s.replace(/-/g,'+').replace(/_/g,'/');
+    var pad = 4 - s.length % 4; if (pad !== 4) s += '='.repeat(pad);
+    var bin = atob(s), arr = new Uint8Array(bin.length);
+    for (var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    return arr;
+  }
+  function b64enc(buf) {
+    return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+
+  try {
+    // Step 1: check if we need to verify an existing passkey first
+    var verifyRes = await fetch('/passkey/verify-for-add/begin', {method:'POST', credentials:'same-origin'});
+    var verifyOpts = await verifyRes.json();
+    if (!verifyOpts.ok) throw new Error(verifyOpts.error || 'Failed to start verification');
+
+    if (!verifyOpts.skip) {
+      // User has existing passkeys — must authenticate with one first
+      status.textContent = 'Verifying existing passkey…';
+      var getOpts = {
+        publicKey: {
+          challenge: b64dec(verifyOpts.challenge),
+          timeout: verifyOpts.timeout,
+          rpId: verifyOpts.rpId,
+          allowCredentials: verifyOpts.allowCredentials.map(function(c){ return {type:c.type, id:b64dec(c.id)}; }),
+          userVerification: verifyOpts.userVerification,
+        }
+      };
+      var existingCred = await navigator.credentials.get(getOpts);
+      var completeVerify = await fetch('/passkey/verify-for-add/complete', {
+        method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+        body: JSON.stringify({
+          id: existingCred.id,
+          clientDataJSON: b64enc(existingCred.response.clientDataJSON),
+          authenticatorData: b64enc(existingCred.response.authenticatorData),
+          signature: b64enc(existingCred.response.signature),
+        })
+      });
+      var verifyResult = await completeVerify.json();
+      if (!verifyResult.ok) throw new Error(verifyResult.error || 'Existing passkey verification failed');
+    }
+
+    // Step 2: register the new passkey
+    status.textContent = 'Registering new passkey…';
+    var res = await fetch('/passkey/register/begin', {method:'POST', credentials:'same-origin'});
+    var opts = await res.json();
+    if (opts.ok === false) throw new Error(opts.error || 'Registration failed');
+    var cred = await navigator.credentials.create({
+      publicKey: {
+        rp: opts.rp,
+        user: { id: b64dec(opts.user.id), name: opts.user.name, displayName: opts.user.displayName },
+        challenge: b64dec(opts.challenge),
+        pubKeyCredParams: opts.pubKeyCredParams,
+        timeout: opts.timeout,
+        attestation: opts.attestation,
+        authenticatorSelection: opts.authenticatorSelection,
+        excludeCredentials: (opts.excludeCredentials||[]).map(function(c){ return {type:c.type, id:b64dec(c.id)}; }),
+      }
+    });
+    var completeRes = await fetch('/passkey/register/complete', {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+      body: JSON.stringify({
+        clientDataJSON: b64enc(cred.response.clientDataJSON),
+        attestationObject: b64enc(cred.response.attestationObject),
+        deviceName: navigator.userAgent.substring(0,80),
+      })
+    });
+    var result = await completeRes.json();
+    if (result.ok) {
+      status.style.color = '#4ade80';
+      status.textContent = '✓ Passkey added!';
+      setTimeout(function(){ location.reload(); }, 1200);
+    } else {
+      throw new Error(result.error || 'Registration failed');
+    }
+  } catch(e) {
+    status.style.color = '#f87171';
+    status.textContent = e.message || 'Failed';
+    btn.disabled = false;
+  }
+}
+async function removePasskey(id, btn) {
+  if (!confirm('Remove this passkey?')) return;
+  var res = await fetch('/passkey/remove', {
+    method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+    body: JSON.stringify({id: id})
+  });
+  var r = await res.json();
+  if (r.ok) location.reload();
+}
+</script>
+
+{% endblock %}
