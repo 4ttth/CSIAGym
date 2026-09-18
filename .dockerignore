@@ -1,0 +1,21 @@
+.git
+.gitignore
+.env
+.env.local
+
+# Never bake secrets, local data, or docs into the image
+deploy/ssl/
+instance/
+audit-docs/
+archive/
+docs/
+*.md
+!WHATS-NEW.md
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

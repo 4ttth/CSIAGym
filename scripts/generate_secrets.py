@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
 Run once before first `docker compose up` to populate .env with generated secrets.
-Usage: python3 generate_secrets.py
+Usage: python3 scripts/generate_secrets.py   (run from the repository root)
 """
 import secrets, os, re
 
-env_path = os.path.join(os.path.dirname(__file__), ".env")
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(REPO_ROOT, ".env")
 template_path = env_path + ".template"
 
 if not os.path.exists(env_path):

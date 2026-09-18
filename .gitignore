@@ -1,0 +1,40 @@
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+.env.local
+deploy/ssl/*
+!deploy/ssl/README.md
+deploy/nginx/nginx.conf          # rendered from nginx.conf.template; may embed hostnames
+
+# ── Instance data — never commit the DB, logs, uploads, or challenge files ────
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Runtime-generated media ───────────────────────────────────────────────────
+app/static/post_images/
+avatar_admin.webp
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── Editors / OS ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Scratch ───────────────────────────────────────────────────────────────────
+.how2
+*.bak
+*.log
