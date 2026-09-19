@@ -20,6 +20,12 @@ SOLUTIONS_DIR = os.path.join(
 )
 MAX_SOLUTION_FILE_BYTES = 100 * 1024 * 1024  # 100 MB cap for solution files
 
+# Artifacts handed out with a challenge (EXIF-laden photos, binaries to reverse,
+# carved archives). Populated by the seeder; see Challenge.file_attachment.
+CHALLENGE_FILES_DIR = os.path.join(
+    os.path.dirname(__file__), '..', '..', 'instance', 'challenge_files'
+)
+
 
 def _safe_join(base: str, filename: str) -> str:
     """Resolve filename inside base and assert containment. Raises ValueError on escape."""
@@ -300,6 +306,36 @@ def add_solve(challenge_id):
     db.session.commit()
     log_action('add_solve', f'{user.username} -> {challenge.title}')
     return jsonify(ok=True, message=f'Solve added: {user.username} → "{challenge.title}".')
+
+
+@challenges_bp.route('/challenges/<int:challenge_id>/attachment')
+@login_required
+def download_attachment(challenge_id):
+    """
+    Serve the artifact attached to a challenge.
+
+    The stored value is a bare filename; _safe_join basenames it and asserts
+    containment before anything is opened, so a crafted Challenge row cannot
+    reach outside instance/challenge_files/.
+    """
+    from flask import send_file
+
+    challenge = Challenge.query.get_or_404(challenge_id)
+    if challenge.is_hidden and not current_user.is_admin:
+        abort(404)
+    if not challenge.file_attachment:
+        abort(404)
+
+    try:
+        path = _safe_join(CHALLENGE_FILES_DIR, challenge.file_attachment)
+    except ValueError:
+        abort(404)
+    if not os.path.isfile(path):
+        abort(404)
+
+    # Stored as "<slug>__<original name>" — hand the player the original name.
+    download_name = challenge.file_attachment.split('__', 1)[-1]
+    return send_file(path, as_attachment=True, download_name=download_name)
 
 
 @challenges_bp.route('/challenges/<int:challenge_id>/submit', methods=['POST'])

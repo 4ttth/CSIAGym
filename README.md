@@ -288,13 +288,20 @@ instances and removes both the container and its working directory.
 │   ├── templates/               Jinja2 templates, grouped by feature
 │   └── static/                  CSS, JS (incl. 9 page tours), images, seed avatars
 │
+├── challenges/                  the official seeded challenge set (2 per category)
+│   ├── __init__.py              registry + the module contract
+│   ├── _common.py               stdlib-only build helpers (PNG, EXIF, ZIP, gcc)
+│   ├── assets/                  base images the generators build on
+│   └── c01..c10_*.py            one module per challenge — no flags stored here
+│
 ├── runner/                      challenge-execution sidecar (separate image)
 │   ├── main.py                  FastAPI service, owns the Docker socket
 │   ├── Dockerfile
 │   └── requirements.txt
 │
 ├── scripts/
-│   └── generate_secrets.py      one-shot .env secret generator
+│   ├── generate_secrets.py      one-shot .env secret generator
+│   └── show_seed_flags.py       print the seeded challenges' answer key
 │
 ├── deploy/
 │   ├── nginx/nginx.conf.template    fill in and save as nginx.conf (git-ignored)
@@ -518,6 +525,30 @@ config to match, or players will get an opaque 413 from the proxy.
 ---
 
 ## Challenge authoring
+
+### The seeded set (published automatically)
+
+On first boot the platform builds and publishes ten official challenges — two
+each for Web Exploitation, Cryptography, Forensics, Reverse Engineering, and
+Binary Exploitation, 1500 points in total. The sources live in
+[`challenges/`](challenges/); see [`challenges/README.md`](challenges/README.md)
+for the table and the operator notes.
+
+Seeding is idempotent. Challenges already in the database are left alone, so
+every boot after the first is a no-op, and deleting one in the admin console
+and restarting re-publishes just that one.
+
+**No flag is stored in this repository.** Each challenge module receives a flag
+generated on *your* deployment and bakes it into whatever it produces — the
+ciphertext in a prompt, the EXIF of a photo, the XOR table inside an ELF. The
+four Docker-backed challenges ship a `flag.txt`, so the runner mints a fresh
+per-player flag at every launch on top of that.
+
+```bash
+SEED_CHALLENGES=0                       # skip seeding entirely
+SEED_FLAG_ROTTEN_BASE='CSIA{...}'       # pin one flag before first boot
+python3 scripts/show_seed_flags.py      # read the answer key
+```
 
 ### As an administrator
 

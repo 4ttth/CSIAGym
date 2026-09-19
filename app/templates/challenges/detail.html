@@ -43,6 +43,19 @@
       #challenge-desc p { margin-bottom:0.6rem; }
     </style>
 
+    {% if challenge.file_attachment %}
+    <div class="mb-6">
+      <h3 class="font-semibold text-lg mb-2" style="color:#111111;">Challenge file</h3>
+      <a href="{{ url_for('challenges.download_attachment', challenge_id=challenge.id) }}"
+         style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border:2px solid #8b0000;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;font-size:0.8rem;text-decoration:none;">
+        &#11015; Download {{ challenge.file_attachment.split('__')[-1] }}
+      </a>
+      <p class="text-gray-500 text-sm" style="margin-top:0.5rem;">
+        Everything you need to solve this challenge is inside that file.
+      </p>
+    </div>
+    {% endif %}
+
     <div class="mb-6 p-4 bg-gray-50 rounded-lg">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">

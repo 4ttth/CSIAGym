@@ -320,6 +320,11 @@ def _build_web_container(
             NPM_CACHE_DIR: {"bind": "/root/.npm", "mode": "rw"},
         },
         working_dir="/app",
+        # The allocated port is only substituted into the command for servers
+        # that take it on the command line (php -S, http.server). Anything that
+        # binds a port itself — Flask, Express, a plain http.server subclass —
+        # needs to be told, so hand it over in the environment too.
+        environment={"PORT": str(port), "CHAL_PORT": str(port)},
         mem_limit=MEM_LIMIT,
         cpu_quota=CPU_QUOTA,
         cpu_period=CPU_PERIOD,
@@ -380,6 +385,7 @@ def _build_misc_container(
             NPM_CACHE_DIR: {"bind": "/root/.npm", "mode": "rw"},
         },
         working_dir="/app",
+        environment={"PORT": str(port), "CHAL_PORT": str(port)},
         mem_limit=MEM_LIMIT,
         cpu_quota=CPU_QUOTA,
         cpu_period=CPU_PERIOD,

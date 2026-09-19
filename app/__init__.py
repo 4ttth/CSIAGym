@@ -606,4 +606,15 @@ def create_app(config_class=Config):
             print("   \u26a0\ufe0f  Change this password after first login!", file=sys.stderr)
             print("=" * 60, file=sys.stderr)
 
+        # Publish the official challenge set. Idempotent: challenges that are
+        # already in the database are left alone, so this is a no-op on every
+        # boot after the first. Set SEED_CHALLENGES=0 to turn it off.
+        try:
+            from app.seed import seed_challenges
+            seed_challenges(app)
+        except Exception:
+            import traceback
+            app.logger.error('Challenge seeding failed (the platform still '
+                             'starts):\n%s', traceback.format_exc())
+
     return app
